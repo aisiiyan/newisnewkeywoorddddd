@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Keyword Organizer</title>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ===== Base (Dark Mode) ===== */
+    body {
+      font-family: "Inter", sans-serif;
+      background: #0f172a;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      color: #e2e8f0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px; /* responsive */
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    /* ===== Buttons ===== */
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;  /* pastikan isi tombol center */
+      gap: 6px;
+      background: #3b82f6;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 1.5;
+    }
+    button:hover { background: #2563eb; }
+    button.secondary { background: #334155; color: #e2e8f0; }
+    button.secondary:hover { background: #475569; }
+    button.danger { background: #ef4444; }
+    button.danger:hover { background: #dc2626; }
+
+    /* ===== Inputs Row ===== */
+    .keyword-inputs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap; /* biar turun di layar kecil */
+    }
+    .box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 250px; /* minimal lebar kolom */
+    }
+    .box .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== Textarea: 1 baris tampilan & no resize ===== */
+    textarea {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      resize: none;            /* tidak bisa dibesarkan */
+      font-size: 14px;
+      background: #0f172a;
+      color: #f1f5f9;
+
+      height: 24px;            /* tinggi pas 1 baris */
+      line-height: 24px;       /* teks rata vertikal */
+      white-space: nowrap;     /* tetap 1 baris */
+      overflow-x: auto;        /* scroll horizontal jika panjang */
+      overflow-y: hidden;      /* matikan scroll vertikal */
+    }
+
+    /* ===== Organize button full width & center ===== */
+    .organize-btn {
+      width: 100%;
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== Lists ===== */
+    .keywords-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      color: #f1f5f9;
+    }
+    .keywords-list {
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 12px;
+      background: #0f172a;
+      min-height: 100px;
+      margin-bottom: 20px;
+    }
+    .keywords-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .keywords-columns label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #e2e8f0;
+      word-break: break-word;
+    }
+
+    /* ===== Selected area ===== */
+    .selected-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #f1f5f9;
+    }
+    .selected-box {
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 50px;
+      background: #0f172a;
+      font-size: 14px;
+      margin-bottom: 15px;
+      color: #e2e8f0;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: 0.3s;
+      z-index: 50;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ===== Responsiveness ===== */
+    /* Tablet: jadikan 2 kolom untuk daftar keyword */
+    @media (max-width: 900px) {
+      .keywords-columns {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    /* HP: input bertumpuk, checkbox 1 kolom, tombol full width */
+    @media (max-width: 600px) {
+      .keyword-inputs { flex-direction: column; }
+      .keywords-columns { grid-template-columns: 1fr; }
+      button { width: 100%; }
+      .actions { flex-direction: column; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Keyword Organizer</h2>
+
+    <!-- 3 kolom input -->
+    <div class="keyword-inputs">
+      <div class="box">
+        <div class="btn-group">
+          <button onclick="pasteKeyword(1)"><i data-lucide="clipboard"></i> Paste</button>
+          <button class="secondary" onclick="clearBox(1)"><i data-lucide="x-circle"></i> Clear</button>
+        </div>
+        <textarea id="input1" placeholder="Masukkan keywords..."></textarea>
+      </div>
+      <div class="box">
+        <div class="btn-group">
+          <button onclick="pasteKeyword(2)"><i data-lucide="clipboard"></i> Paste</button>
+          <button class="secondary" onclick="clearBox(2)"><i data-lucide="x-circle"></i> Clear</button>
+        </div>
+        <textarea id="input2" placeholder="Masukkan keywords..."></textarea>
+      </div>
+      <div class="box">
+        <div class="btn-group">
+          <button onclick="pasteKeyword(3)"><i data-lucide="clipboard"></i> Paste</button>
+          <button class="secondary" onclick="clearBox(3)"><i data-lucide="x-circle"></i> Clear</button>
+        </div>
+        <textarea id="input3" placeholder="Masukkan keywords..."></textarea>
+      </div>
+    </div>
+
+    <button class="organize-btn" onclick="organizeKeywords()">
+      <i data-lucide="list-checks"></i> Organize Keywords
+    </button>
+
+    <div class="keywords-header">
+      <p id="foundCount">0 keywords found</p>
+      <div>
+        <button class="secondary" onclick="toggleAllCheckboxes(true)"><i data-lucide="check-square"></i> Check All</button>
+        <button class="secondary" onclick="toggleAllCheckboxes(false)"><i data-lucide="square"></i> Uncheck All</button>
+      </div>
+    </div>
+
+    <div class="keywords-list" id="keywordsList"></div>
+
+    <div class="box">
+      <div class="selected-label">
+        <span>Selected Keywords</span>
+        <span id="selectedCount">(0)</span>
+      </div>
+      <div class="selected-box" id="selectedKeywords"></div>
+    </div>
+
+    <div class="actions">
+      <button onclick="copySelected()"><i data-lucide="copy"></i> Copy Selected</button>
+      <button class="danger" onclick="resetAll()"><i data-lucide="refresh-ccw"></i> Reset All</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Copied!</div>
+
+  <script>
+    /* ===== Data negara untuk filter ===== */
+    const countries = ["afghanistan","albania","algeria","andorra","angola","antigua and barbuda","argentina","armenia","australia","austria","azerbaijan",
+      "bahamas","bahrain","bangladesh","barbados","belarus","belgium","belize","benin","bhutan","bolivia","bosnia and herzegovina","botswana","brazil","brunei","bulgaria","burkina faso","burundi",
+      "cabo verde","cambodia","cameroon","canada","central african republic","chad","chile","china","colombia","comoros","congo","costa rica","croatia","cuba","cyprus","czechia",
+      "denmark","djibouti","dominica","dominican republic","ecuador","egypt","el salvador","equatorial guinea","eritrea","estonia","eswatini","ethiopia",
+      "fiji","finland","france","gabon","gambia","georgia","germany","ghana","greece","grenada","guatemala","guinea","guinea-bissau","guyana",
+      "haiti","honduras","hungary","iceland","india","indonesia","iran","iraq","ireland","israel","italy","jamaica","japan","jordan",
+      "kazakhstan","kenya","kiribati","korea north","korea south","kuwait","kyrgyzstan","laos","latvia","lebanon","lesotho","liberia","libya","liechtenstein","lithuania","luxembourg",
+      "madagascar","malawi","malaysia","maldives","mali","malta","marshall islands","mauritania","mauritius","mexico","micronesia","moldova","monaco","mongolia","montenegro","morocco","mozambique","myanmar",
+      "namibia","nauru","nepal","netherlands","new zealand","nicaragua","niger","nigeria","north macedonia","norway","oman","pakistan","palau","palestine","panama","papua new guinea","paraguay","peru","philippines","poland","portugal",
+      "qatar","romania","russia","rwanda","saint kitts and nevis","saint lucia","saint vincent and the grenadines","samoa","san marino","sao tome and principe","saudi arabia","senegal","serbia","seychelles","sierra leone","singapore","slovakia","slovenia","solomon islands","somalia","south africa","spain","sri lanka","sudan","suriname","sweden","switzerland","syria",
+      "taiwan","tajikistan","tanzania","thailand","timor-leste","togo","tonga","trinidad and tobago","tunisia","turkey","turkmenistan","tuvalu",
+      "uganda","ukraine","united arab emirates","united kingdom","united states","uruguay","uzbekistan","vanuatu","vatican city","venezuela","vietnam","yemen","zambia","zimbabwe"
+    ];
+
+    /* ===== Clipboard helpers ===== */
+    function pasteKeyword(num) {
+      navigator.clipboard.readText().then(text => {
+        document.getElementById("input" + num).value = text;
+      });
+    }
+    function clearBox(num) {
+      document.getElementById("input" + num).value = "";
+    }
+
+    /* ===== Main actions ===== */
+    function resetAll() {
+      ["input1", "input2", "input3"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("keywordsList").innerHTML = "";
+      document.getElementById("foundCount").textContent = "0 keywords found";
+      document.getElementById("selectedKeywords").textContent = "";
+      document.getElementById("selectedCount").textContent = "(0)";
+      showToast("All reset!");
+    }
+
+    function organizeKeywords() {
+      const allInputs = [
+        ...document.getElementById("input1").value.split(/[\n,]+/),
+        ...document.getElementById("input2").value.split(/[\n,]+/),
+        ...document.getElementById("input3").value.split(/[\n,]+/)
+      ].map(k => k.trim()).filter(k => k);
+
+      const filtered = allInputs.filter(k => !countries.includes(k.toLowerCase()));
+      const unique = [...new Set(filtered)].sort((a,b)=>a.localeCompare(b));
+
+      const container = document.getElementById("keywordsList");
+      container.innerHTML = "";
+      const columns = document.createElement("div");
+      columns.className = "keywords-columns";
+
+      unique.forEach(kw => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = kw;
+        checkbox.className = "kw";
+        checkbox.onchange = updateSelected;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(kw));
+        columns.appendChild(label);
+      });
+
+      container.appendChild(columns);
+      document.getElementById("foundCount").textContent = unique.length + " keywords found";
+      updateSelected();
+      showToast("Organized!");
+    }
+
+    function updateSelected() {
+      const selected = Array.from(document.querySelectorAll(".kw:checked")).map(cb => cb.value);
+      document.getElementById("selectedKeywords").textContent = selected.join(", ");
+      document.getElementById("selectedCount").textContent = "(" + selected.length + ")";
+    }
+
+    function toggleAllCheckboxes(state) {
+      document.querySelectorAll(".kw").forEach(cb => cb.checked = state);
+      updateSelected();
+    }
+
+    function copySelected() {
+      const text = document.getElementById("selectedKeywords").textContent;
+      navigator.clipboard.writeText(text).then(() => showToast("Copied!"));
+    }
+
+    /* ===== Toast ===== */
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
+    /* ===== Enforce single line: cegah Enter di textarea ===== */
+    function preventEnterSingleLine() {
+      document.querySelectorAll("textarea").forEach(t => {
+        t.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") e.preventDefault();
+        });
+      });
+    }
+
+    /* ===== Init ===== */
+    // Render icons & inits saat DOM siap
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      preventEnterSingleLine();
+    });
+  </script>
+</body>
+</html>
